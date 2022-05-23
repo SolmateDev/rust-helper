@@ -1,0 +1,82 @@
+[package]
+name = "solmate-client"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+# server binary
+[[bin]]
+    name = "server"
+    path = "src/server.rs"
+
+# client binary
+#[[bin]]
+#    name = "client"
+#    path = "src/client.rs"
+
+# cargo run --bin force-build --features build_deps
+
+
+[lib]
+path = "./src/lib.rs"
+
+
+[dependencies]
+
+bincode="1.1.4"
+solana-client = "1.9.20"
+solana-ledger = "1.9.20"
+solana-measure = "1.9.20"
+solana-merkle-tree = "1.9.20"
+solana-metrics = "1.9.20"
+solana-perf = "1.9.20"
+solana-rayon-threadlimit = "1.9.20"
+solana-rpc = "1.9.20"
+solana-runtime = "1.9.20"
+solana-sdk ="1.9.20"
+solana-streamer = "1.9.20"
+solana-test-validator = "1.9.20"
+solana-transaction-status = "1.9.20"
+solana-version = "1.9.20"
+
+serum_dex = { path = "../serum-dex/dex", default-features = false, features = ["client"] }
+serum-common = { path = "../serum-dex/common", features = ["client"] }
+anyhow = "1.0.32"
+clap = "3.0.0-beta.1"
+debug_print = "1.0.0"
+enumflags2 = "0.6.4"
+threadpool = "1.8.1"
+log = "0.4"
+rand = "0.7.3"
+sloggers = "1.0"
+slog-scope = "4.3"
+slog-stdlog = "4"
+spl-token = { version = "3.0.0-pre1", features = ["no-entrypoint"], default-features = false }
+warp = "0.2"
+safe-transmute = "0.11.0"
+
+tonic = "0.5"
+tokio = { version = "1.0", features = ["full",] } #["macros", "rt-multi-thread",]
+prost = "0.8"
+generic-array = "0.14.5"
+tokio-stream = "0.1.8"
+ed25519-dalek = "1.0.1"
+futures = "0.3.21"
+serde_json = "1.0.81"
+jsonrpc-core = "18.0.0"
+jsonrpc-core-client = "18.0.0"
+#solana-account-decoder = "1.9.1"
+
+[dev-dependencies]
+assert_matches = "1.5.0"
+jsonrpc-http-server = "18.0.0"
+solana-logger = "1.9.6"
+
+[build-dependencies]
+tonic-build = "0.5"
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+
