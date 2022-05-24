@@ -1,6 +1,6 @@
 [package]
-name = "solmate-client"
-version = "0.1.0"
+name = "solmate-rust-helper"
+version = "0.0.1"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -23,22 +23,22 @@ path = "./src/lib.rs"
 
 
 [dependencies]
-
+# "1.9.21" "1.9.21"
 bincode="1.1.4"
-solana-client = "1.9.20"
-solana-ledger = "1.9.20"
-solana-measure = "1.9.20"
-solana-merkle-tree = "1.9.20"
-solana-metrics = "1.9.20"
-solana-perf = "1.9.20"
-solana-rayon-threadlimit = "1.9.20"
-solana-rpc = "1.9.20"
-solana-runtime = "1.9.20"
-solana-sdk ="1.9.20"
-solana-streamer = "1.9.20"
-solana-test-validator = "1.9.20"
-solana-transaction-status = "1.9.20"
-solana-version = "1.9.20"
+solana-client = "1.9.21"
+solana-ledger = "1.9.21"
+solana-measure = "1.9.21"
+solana-merkle-tree = "1.9.21"
+solana-metrics = "1.9.21"
+solana-perf = "1.9.21"
+solana-rayon-threadlimit = "1.9.21"
+solana-rpc = "1.9.21"
+solana-runtime = "1.9.21"
+solana-sdk = "1.9.21"
+solana-streamer = "1.9.21"
+solana-test-validator = "1.9.21"
+solana-transaction-status = "1.9.21"
+solana-version = "1.9.21"
 
 serum_dex = { path = "../serum-dex/dex", default-features = false, features = ["client"] }
 serum-common = { path = "../serum-dex/common", features = ["client"] }
@@ -71,7 +71,7 @@ jsonrpc-core-client = "18.0.0"
 [dev-dependencies]
 assert_matches = "1.5.0"
 jsonrpc-http-server = "18.0.0"
-solana-logger = "1.9.6"
+solana-logger = "1.10.0"
 
 [build-dependencies]
 tonic-build = "0.5"

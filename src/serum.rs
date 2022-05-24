@@ -3,35 +3,32 @@ use serum_dex::instruction::NewOrderInstructionV3;
 use solana_client::rpc_response::RpcResponseContext;
 use solana_sdk::account::Account;
 
-use solmate_client::basic::{SignedTx};
-use solmate_client::serum::{  ListMarketResponse, ListMarketRequest, ConsumeEventsRequest, InitOpenOrderRequest, MarketState, CancelOrderRequest, SettleFundsRequest, CloseOpenOrderRequest, MarketRequest, MatchOrdersRequest, MonitorQueueRequest};
+use solmate_rust_helper::basic::{SignedTx};
+use solmate_rust_helper::serum::{  ListMarketResponse, ListMarketRequest, ConsumeEventsRequest, InitOpenOrderRequest, MarketState, CancelOrderRequest, SettleFundsRequest, CloseOpenOrderRequest, MarketRequest, MatchOrdersRequest, MonitorQueueRequest};
+use solmate_rust_helper::util::get_jwt;
 use tokio::runtime::{Builder, Runtime};
 use tokio::sync::mpsc::{self, Sender};
 use tonic::{Request, Response, Status};
 use std::num::NonZeroU64;
 use futures::lock::Mutex;
-use std::{env, thread};
-use std::pin::Pin;
 use tokio_stream::wrappers::ReceiverStream;
 //use solana_rpc::rpc_pubsub::gen_client::Client as PubsubClient;
-use solmate_client::{
-    convert_keypair,convert_pubkey, copy_keypair, reverse_pubkey,
+use solmate_rust_helper::{
+    convert_keypair,convert_pubkey, reverse_pubkey,
 };
-use solmate_client::util::{
-    pubkey_from_bytes, keypair_from_bytes,
-};
-use solmate_client::config;
 
-use solmate_client::serum::{
+use solmate_rust_helper::config;
+
+use solmate_rust_helper::serum::{
     dex_server::{
         DexServer, Dex,
     },
-    ConsumeEventUpdate,
     
-     WholeShebang, 
+    
+      
     MarketPubkeys as PbMarketPubkeys,
     Event,
-    OrderStatus, Order,
+    Order,
 };
 
 use solana_sdk::{
@@ -39,18 +36,10 @@ use solana_sdk::{
     pubkey::{
         Pubkey,
     },
-    signer::keypair::{
-        Keypair,
-    },
-    transaction::{Transaction},
-};
-use serum_common::client::rpc::{
-    create_and_init_mint, create_token_account, mint_to_new_account, send_txn, simulate_transaction,
+    
 };
 
 use std::{
-    time::{Duration, Instant},
-    thread::sleep,
     sync::Arc
 };
 use anyhow::{anyhow,Result};
@@ -63,10 +52,10 @@ use solana_client::{
         }
     },
     tpu_client::TpuClientConfig,
-    rpc_config::RpcSignatureSubscribeConfig,
+    
 };
 
-use bincode::serialize;
+
 use jsonrpc_core::futures::StreamExt;
 
 use self::dex::MarketPubkeys;
@@ -163,13 +152,13 @@ pub fn reverse_market_pubkeys<'a>(ans: &'a PbMarketPubkeys)->Result<dex::MarketP
 
 pub fn convert_level<'a>(
     level: CommitmentLevel
-)->Result<solmate_client::basic::TxStatus,Status>{
+)->Result<solmate_rust_helper::basic::TxStatus,Status>{
     if CommitmentLevel::Processed==level {
-        return Ok(solmate_client::basic::TxStatus::Processed);
+        return Ok(solmate_rust_helper::basic::TxStatus::Processed);
     } else if CommitmentLevel::Confirmed==level{
-        return Ok(solmate_client::basic::TxStatus::Confirmed);
+        return Ok(solmate_rust_helper::basic::TxStatus::Confirmed);
     } else if CommitmentLevel::Finalized==level{
-        return Ok(solmate_client::basic::TxStatus::Finalized);
+        return Ok(solmate_rust_helper::basic::TxStatus::Finalized);
     } else {
         return Err(Status::internal("bad conversion for confirmation level"))
     }
@@ -180,7 +169,7 @@ pub fn convert_new_order_v3<'a >(
 )->Result<NewOrderInstructionV3,Status>{
     let order;
     match &req.order{
-        Some(solmate_client::serum::order::Order::V3(y))=>{
+        Some(solmate_rust_helper::serum::order::Order::V3(y))=>{
             order=y;
         },
         None=>{
@@ -202,22 +191,22 @@ pub fn convert_new_order_v3<'a >(
     let max_native_pc_qty_including_fees = NonZeroU64::new(order.max_native_pc_qty_including_fees).ok_or(Status::invalid_argument("max_coin_qty is zero"))?;
 
     let self_trade_behavior;
-    if order.self_trade_behavior == solmate_client::serum::SelfTradeBehavior::AbortTransaction as i32{
+    if order.self_trade_behavior == solmate_rust_helper::serum::SelfTradeBehavior::AbortTransaction as i32{
         self_trade_behavior=serum_dex::instruction::SelfTradeBehavior::AbortTransaction
-    } else if order.self_trade_behavior == solmate_client::serum::SelfTradeBehavior::CancelProvide as i32 {
+    } else if order.self_trade_behavior == solmate_rust_helper::serum::SelfTradeBehavior::CancelProvide as i32 {
         self_trade_behavior=serum_dex::instruction::SelfTradeBehavior::CancelProvide
-    } else if order.self_trade_behavior == solmate_client::serum::SelfTradeBehavior::DecrementTake as i32 {
+    } else if order.self_trade_behavior == solmate_rust_helper::serum::SelfTradeBehavior::DecrementTake as i32 {
         self_trade_behavior=serum_dex::instruction::SelfTradeBehavior::DecrementTake
     } else {
         return Err(Status::invalid_argument("bad self trade behavior"));
     }
 
     let order_type;
-    if order.order_type == solmate_client::serum::OrderType::ImmediateOrCancel as i32{
+    if order.order_type == solmate_rust_helper::serum::OrderType::ImmediateOrCancel as i32{
         order_type = serum_dex::matching::OrderType::ImmediateOrCancel;
-    } else if order.order_type == solmate_client::serum::OrderType::Limit as i32 {
+    } else if order.order_type == solmate_rust_helper::serum::OrderType::Limit as i32 {
         order_type = serum_dex::matching::OrderType::Limit;
-    } else if order.order_type == solmate_client::serum::OrderType::PostOnly as i32{
+    } else if order.order_type == solmate_rust_helper::serum::OrderType::PostOnly as i32{
         order_type = serum_dex::matching::OrderType::PostOnly;
     } else {
         return Err(Status::invalid_argument("bad order type"));
@@ -241,25 +230,6 @@ pub fn convert_new_order_v3<'a >(
     });
 }
 
-async fn convert_state<'a>(client: Arc<Mutex<RpcClient>>,program_id: &'a Pubkey,req: &'a MarketState)->Result<MarketPubkeys>{
-    let state;
-    let errmsg="bad market state";
-    match &req.market{
-        Some(solmate_client::serum::market_state::Market::Id(id))=>{
-            let market=convert_pubkey(id).or(Err(anyhow!(errmsg)))?;
-            state = dex::get_keys_for_market(client.clone(), &program_id, &market).await.or(Err(anyhow!("failed to get market")));
-        },
-        Some(solmate_client::serum::market_state::Market::State(pb_state)) => {
-            state=reverse_market_pubkeys(pb_state);
-        },
-        _=>{
-            return Err(anyhow!("blank market"));
-        }
-    }
-
-    return state;
-    
-}
 
 
 
@@ -270,21 +240,30 @@ impl Dex for MyServer {
 
     async fn get_market_pubkeys<'a>(&'a self, req: Request<MarketRequest>) -> Result<Response<PbMarketPubkeys>,Status> {
         let r = req.get_ref();
-        let mut errmsg="";
+        let mut errmsg;
+        let jwt = get_jwt(&req);
+        let serum_client = dex::SerumClient::new(self.rpc.clone(),&jwt);
+        
+        
+        
 
         errmsg="bad program id";
         let program_id=convert_pubkey(&r.dex_program_id.clone().ok_or(Status::internal(errmsg))?.id.ok_or(Status::internal(errmsg))?).or(Err(Status::internal(errmsg)))?;
         errmsg="bad market pubkey";
         let market=convert_pubkey(&r.market.clone().ok_or(Status::internal(errmsg))?).or(Err(Status::internal(errmsg)))?;
         errmsg="failed to get market";
-        let state = dex::get_keys_for_market(self.rpc.clone(), &program_id, &market).await.or(Err(Status::internal(errmsg)))?;
+        let state = serum_client.get_keys_for_market( &program_id, &market).await.or(Err(Status::internal(errmsg)))?;
         return Ok(Response::new(convert_market_pubkeys(&state)));
     }
 
     async fn list_market<'a>(&'a self, req: Request<ListMarketRequest>) -> Result<Response<ListMarketResponse>,Status> { 
         let r = req.get_ref();
 
-        let mut errmsg = "";
+        
+        let jwt = get_jwt(&req);
+        let serum_client = dex::SerumClient::new(self.rpc.clone(),&jwt);
+
+        let mut errmsg ;
 
         errmsg = "bad payer";
         let payer = convert_keypair(&r.payer.clone().ok_or(Status::internal(errmsg))?).or(Err(Status::invalid_argument(errmsg)))?;
@@ -297,15 +276,16 @@ impl Dex for MyServer {
         let pc_mint=convert_pubkey(&r.pc_mint.clone().ok_or(Status::internal(errmsg))?).or(Err(Status::internal(errmsg)))?;
 
         errmsg = "failed to process";
-        let (signed_tx,mp)=dex::list_market(self.rpc.clone(), &program_id, &payer, &coin_mint, &pc_mint, r.coin_lot_size, r.pc_lot_size).await.or(Err(Status::internal(errmsg)))?;
+        let (signed_tx,mp)=serum_client.list_market(&program_id, &payer, &coin_mint, &pc_mint, r.coin_lot_size, r.pc_lot_size).await.or(Err(Status::internal(errmsg)))?;
         
         return Ok(Response::new(ListMarketResponse{ market_pubkeys: Some(convert_market_pubkeys(&mp)), tx: Some(SignedTx{ tx: signed_tx }) }));
     }
 
     async fn consume_events<'a>(&'a self, req: Request<ConsumeEventsRequest>) -> Result<Response<SignedTx>,Status> { 
         let r = req.get_ref();
-
-        let mut errmsg = "";
+        let jwt = get_jwt(&req);
+        let serum_client = dex::SerumClient::new(self.rpc.clone(),&jwt);
+        let mut errmsg ;
 
         errmsg = "bad program id";
         let program_id=convert_pubkey(&r.dex_program_id.clone().ok_or(Status::internal(errmsg))?.id.ok_or(Status::internal(errmsg))?).or(Err(Status::internal(errmsg)))?;
@@ -316,7 +296,7 @@ impl Dex for MyServer {
         errmsg = "bad market";
         let state;
         if let Some(pb_state)=&r.market{
-            state=convert_state(self.rpc.clone(),&program_id,&pb_state).await.or(Err(Status::invalid_argument(errmsg)))?;
+            state=serum_client.convert_state(&program_id,&pb_state).await.or(Err(Status::invalid_argument(errmsg)))?;
         } else {
             return Err(Status::invalid_argument(errmsg));
         }
@@ -327,15 +307,17 @@ impl Dex for MyServer {
         errmsg = "bad pc_mint";
         let pc_wallet=convert_pubkey(&r.pc_wallet.clone().ok_or(Status::internal(errmsg))?).or(Err(Status::internal(errmsg)))?;
 
-        let signed_tx = dex::consume_events(self.rpc.clone(), &program_id, &payer, &state, &coin_wallet, &pc_wallet).await.or(Err(Status::internal("failed to consume events")))?;
+        let signed_tx = serum_client.consume_events(&program_id, &payer, &state, &coin_wallet, &pc_wallet).await.or(Err(Status::internal("failed to consume events")))?;
 
         return Ok(Response::new(SignedTx{ tx: signed_tx }));
     }
 
     async fn init_open_order<'a>(&'a self, req: Request<InitOpenOrderRequest>)->Result<Response<SignedTx>,Status>{
         let r = req.get_ref();
-        
-        let mut errmsg = "";
+        let jwt = get_jwt(&req);
+        let serum_client = dex::SerumClient::new(self.rpc.clone(),&jwt);
+
+        let mut errmsg ;
 
         errmsg = "bad program id";
         let program_id=convert_pubkey(&r.dex_program_id.clone().ok_or(Status::internal(errmsg))?.id.ok_or(Status::internal(errmsg))?).or(Err(Status::internal(errmsg)))?;
@@ -346,7 +328,7 @@ impl Dex for MyServer {
         errmsg = "bad market";
         let state;
         if let Some(pb_state)=&r.market{
-            state=convert_state(self.rpc.clone(),&program_id,&pb_state).await.or(Err(Status::invalid_argument(errmsg)))?;
+            state=serum_client.convert_state(&program_id,&pb_state).await.or(Err(Status::invalid_argument(errmsg)))?;
         } else {
             return Err(Status::invalid_argument(errmsg));
         }
@@ -358,15 +340,16 @@ impl Dex for MyServer {
             orders =None;
         }
         let m_orders = &mut orders;
-        let signed_tx = dex::init_open_orders(self.rpc.clone(),&program_id,&owner,&state,m_orders).await.or(Err(Status::internal("bad init orders")))?;
+        let signed_tx = serum_client.init_open_orders(&program_id,&owner,&state,m_orders).await.or(Err(Status::internal("bad init orders")))?;
         return Ok(Response::new(SignedTx{ tx: signed_tx }));
         //return Err(Status::internal("not implemented yet"));
     }
 
     async fn new_order<'a>(&'a self, req: Request<Order>)->Result<Response<SignedTx>,Status>{
         let r = req.get_ref();
-
-        let mut errmsg = "";
+        let jwt = get_jwt(&req);
+        let serum_client = dex::SerumClient::new(self.rpc.clone(),&jwt);
+        let mut errmsg ;
 
         errmsg = "bad program id";
         let program_id=convert_pubkey(&r.dex_program_id.clone().ok_or(Status::internal(errmsg))?.id.ok_or(Status::internal(errmsg))?).or(Err(Status::internal(errmsg)))?;
@@ -380,7 +363,7 @@ impl Dex for MyServer {
         errmsg = "bad market";
         let state;
         if let Some(pb_state)=&r.market{
-            state=convert_state(self.rpc.clone(),&program_id,&pb_state).await.or(Err(Status::invalid_argument(errmsg)))?;
+            state=serum_client.convert_state(&program_id,&pb_state).await.or(Err(Status::invalid_argument(errmsg)))?;
         } else {
             return Err(Status::invalid_argument(errmsg));
         }
@@ -396,8 +379,7 @@ impl Dex for MyServer {
 
         let new_order = convert_new_order_v3(r)?;
 
-        let signed_tx = dex::place_order(
-            self.rpc.clone(),
+        let signed_tx = serum_client.place_order(
             &program_id,
             &payer,
             &wallet,
@@ -410,7 +392,9 @@ impl Dex for MyServer {
 
     async fn cancel_order<'a>(&'a self, req: Request<CancelOrderRequest>)->Result<Response<SignedTx>,Status>{
         let r = req.get_ref();
-        let mut errmsg = "";
+        let jwt = get_jwt(&req);
+        let serum_client = dex::SerumClient::new(self.rpc.clone(),&jwt);
+        let mut errmsg ;
 
         errmsg = "bad program id";
         let program_id=convert_pubkey(&r.dex_program_id.clone().ok_or(Status::internal(errmsg))?.id.ok_or(Status::internal(errmsg))?).or(Err(Status::internal(errmsg)))?;
@@ -421,7 +405,7 @@ impl Dex for MyServer {
         errmsg = "bad market";
         let state;
         if let Some(pb_state)=&r.market{
-            state=convert_state(self.rpc.clone(),&program_id,&pb_state).await.or(Err(Status::invalid_argument(errmsg)))?;
+            state=serum_client.convert_state(&program_id,&pb_state).await.or(Err(Status::invalid_argument(errmsg)))?;
         } else {
             return Err(Status::invalid_argument(errmsg));
         }
@@ -436,7 +420,7 @@ impl Dex for MyServer {
             return Err(Status::invalid_argument(errmsg));
         }
         
-        let signed_tx = dex::cancel_order_by_client_order_id(self.rpc.clone(),&program_id,&owner,&state,&orders,r.id).await.or(Err(Status::internal("failed to cancel")))?;
+        let signed_tx = serum_client.cancel_order_by_client_order_id(&program_id,&owner,&state,&orders,r.id).await.or(Err(Status::internal("failed to cancel")))?;
 
         return Ok(Response::new(SignedTx{tx:signed_tx}));
     }
@@ -445,8 +429,9 @@ impl Dex for MyServer {
 
     async fn settle_funds<'a>(&'a self, req: Request<SettleFundsRequest>) -> Result<Response<SignedTx>,Status> { 
         let r = req.get_ref();
-
-        let mut errmsg = "";
+        let jwt = get_jwt(&req);
+        let serum_client = dex::SerumClient::new(self.rpc.clone(),&jwt);
+        let mut errmsg ;
 
         errmsg = "bad payer";
         let payer = convert_keypair(&r.payer.clone().ok_or(Status::internal(errmsg))?).or(Err(Status::invalid_argument(errmsg)))?;
@@ -457,7 +442,7 @@ impl Dex for MyServer {
         errmsg = "bad market";
         let state;
         if let Some(pb_state)=&r.market{
-            state=convert_state(self.rpc.clone(),&program_id,&pb_state).await.or(Err(Status::invalid_argument(errmsg)))?;
+            state=serum_client.convert_state(&program_id,&pb_state).await.or(Err(Status::invalid_argument(errmsg)))?;
         } else {
             return Err(Status::invalid_argument(errmsg));
         }
@@ -477,11 +462,11 @@ impl Dex for MyServer {
         match &r.signer{
             Some(x)=>{
                 let y = convert_keypair(x).or(Err(Status::invalid_argument(errmsg)))?;
-                signed_tx = dex::settle_funds(self.rpc.clone(),&program_id,&payer,&state,Some(&y),&order,&coin_wallet,&pc_wallet).await.or(Err(Status::internal(errmsg)))?;
+                signed_tx = serum_client.settle_funds(&program_id,&payer,&state,Some(&y),&order,&coin_wallet,&pc_wallet).await.or(Err(Status::internal(errmsg)))?;
                 
             },
             None=>{
-                signed_tx = dex::settle_funds(self.rpc.clone(),&program_id,&payer,&state,None,&order,&coin_wallet,&pc_wallet).await.or(Err(Status::internal(errmsg)))?;
+                signed_tx = serum_client.settle_funds(&program_id,&payer,&state,None,&order,&coin_wallet,&pc_wallet).await.or(Err(Status::internal(errmsg)))?;
             }
         };
     
@@ -492,7 +477,9 @@ impl Dex for MyServer {
 
     async fn close_open_orders<'a>(&'a self, req: Request<CloseOpenOrderRequest>)->Result<Response<SignedTx>,Status>{
         let r = req.get_ref();
-        let mut errmsg = "";
+        let jwt = get_jwt(&req);
+        let serum_client = dex::SerumClient::new(self.rpc.clone(),&jwt);
+        let mut errmsg ;
 
         errmsg = "bad program id";
         let program_id=convert_pubkey(&r.dex_program_id.clone().ok_or(Status::internal(errmsg))?.id.ok_or(Status::internal(errmsg))?).or(Err(Status::internal(errmsg)))?;
@@ -503,7 +490,7 @@ impl Dex for MyServer {
         errmsg = "bad market";
         let state;
         if let Some(pb_state)=&r.market{
-            state=convert_state(self.rpc.clone(),&program_id,&pb_state).await.or(Err(Status::invalid_argument(errmsg)))?;
+            state=serum_client.convert_state(&program_id,&pb_state).await.or(Err(Status::invalid_argument(errmsg)))?;
         } else {
             return Err(Status::invalid_argument(errmsg));
         }
@@ -517,15 +504,16 @@ impl Dex for MyServer {
         }
         
 
-        let signed_tx = dex::close_open_orders(self.rpc.clone(),&program_id,&owner,&state,&orders).await.or(Err(Status::internal("failed to close open orders")))?;
+        let signed_tx = serum_client.close_open_orders(&program_id,&owner,&state,&orders).await.or(Err(Status::internal("failed to close open orders")))?;
 
         return Ok(Response::new(SignedTx{tx:signed_tx}));
     }
 
     async fn match_orders<'a>(&'a self, req: Request<MatchOrdersRequest>) -> Result<Response<SignedTx>,Status> { 
         let r = req.get_ref();
-
-        let mut errmsg = "";
+        let jwt = get_jwt(&req);
+        let serum_client = dex::SerumClient::new(self.rpc.clone(),&jwt);
+        let mut errmsg ;
 
         errmsg = "bad program id";
         let program_id=convert_pubkey(&r.dex_program_id.clone().ok_or(Status::internal(errmsg))?.id.ok_or(Status::internal(errmsg))?).or(Err(Status::internal(errmsg)))?;
@@ -536,7 +524,7 @@ impl Dex for MyServer {
         errmsg = "bad market";
         let state;
         if let Some(pb_state)=&r.market{
-            state=convert_state(self.rpc.clone(),&program_id,&pb_state).await.or(Err(Status::invalid_argument(errmsg)))?;
+            state=serum_client.convert_state(&program_id,&pb_state).await.or(Err(Status::invalid_argument(errmsg)))?;
         } else {
             return Err(Status::invalid_argument(errmsg));
         }
@@ -547,9 +535,7 @@ impl Dex for MyServer {
         errmsg = "bad pc_wallet";
         let pc_wallet=convert_pubkey(&r.pc_wallet.clone().ok_or(Status::internal(errmsg))?).or(Err(Status::internal(errmsg)))?;
 
-        
-
-        let signed_tx = dex::match_orders(self.rpc.clone(), &program_id, &payer, &state, &coin_wallet, &pc_wallet).await.or(Err(Status::internal("failed to match orders")))?;
+        let signed_tx = serum_client.match_orders(&program_id, &payer, &state, &coin_wallet, &pc_wallet).await.or(Err(Status::internal("failed to match orders")))?;
 
 
         return Ok(Response::new(SignedTx{tx:signed_tx}));
@@ -562,17 +548,19 @@ impl Dex for MyServer {
 
     async fn monitor_queue<'a>(&'a self, req: Request<MonitorQueueRequest>) -> Result<Response<Self::MonitorQueueStream>,Status> { 
         let r = req.get_ref();
+        let jwt = get_jwt(&req);
+        let serum_client = dex::SerumClient::new(self.rpc.clone(),&jwt);
+        //let y = req.metadata().get("hi");
+        let jwt = solmate_rust_helper::util::get_jwt(&req);
 
-        let y = req.metadata().get("hi");
-
-        let mut errmsg="";
+        let mut errmsg;
 
         errmsg = "bad program id";
         let program_id=convert_pubkey(&r.dex_program_id.clone().ok_or(Status::internal(errmsg))?.id.ok_or(Status::internal(errmsg))?).or(Err(Status::internal(errmsg)))?;
         errmsg = "bad market";
         let state;
         if let Some(pb_state)=&r.market{
-            state=convert_state(self.rpc.clone(),&program_id,&pb_state).await.or(Err(Status::invalid_argument(errmsg)))?;
+            state=serum_client.convert_state(&program_id,&pb_state).await.or(Err(Status::invalid_argument(errmsg)))?;
         } else {
             return Err(Status::invalid_argument(errmsg));
         }
@@ -744,42 +732,13 @@ impl MyServer {
         Ok(warp::serve(get_data).run(([127, 0, 0, 1], port)).await)
     }
     */
-
-
-
-
-
-    async fn read_queue_length_loop_single<'a >(
-        &self,
-        program_id: Pubkey,
-        market: &'a Pubkey,
-        port: u16,
-    ) -> Result<()> {
-        
-        let market_keys = dex::get_keys_for_market(self.rpc.clone(), &program_id, market).await?;
-
-        
-        
-            
-        let client = self.rpc.lock().await;
-        
-        let x = client
-                    .get_account_with_commitment(&market_keys.event_q, CommitmentConfig::processed());
-        let event_q_data = x.await?.value.ok_or(anyhow!("no value"))?.data;
-        let inner = dex::remove_dex_account_padding(event_q_data.as_ref())?;
-        let (event_q_header, seg0, seg1) = dex::parse_event_queue(&inner)?;
-        let len = seg0.len() + seg1.len();
-
-        return Ok(());
-        
-    }
 }
 
 
 
 
 
-pub async fn init(my_config: solmate_client::config::Configuration)->DexServer<MyServer>{    
+pub async fn init(my_config: solmate_rust_helper::config::Configuration)->DexServer<MyServer>{    
     let rpc_url = my_config.validator_url_http;
     let ws_url = my_config.validator_url_ws;
     let rpc_client = Arc::new(Mutex::new(RpcClient::new(rpc_url.clone())));

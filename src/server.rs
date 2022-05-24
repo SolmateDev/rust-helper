@@ -13,7 +13,7 @@ mod sol;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
-    let my_config = solmate_client::config::config_from_env();
+    let my_config = solmate_rust_helper::config::config_from_env();
 
     let addr = my_config.grpc_listen_url.parse()?;
     let serum_server = serum::init(my_config.clone()).await;

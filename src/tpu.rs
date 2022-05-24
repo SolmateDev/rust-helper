@@ -11,8 +11,8 @@ use bincode::{
 };
 use std::env;
 
-use solmate_client::config;
-use solmate_client::solananet;
+use solmate_rust_helper::config;
+use solmate_rust_helper::solananet;
 use solananet::{
     broadcast_server::{
         BroadcastServer, Broadcast,
@@ -185,7 +185,7 @@ impl Broadcast for MyServer {
 }
 
 
-pub fn init(my_config: solmate_client::config::Configuration)->BroadcastServer<MyServer>{    
+pub fn init(my_config: solmate_rust_helper::config::Configuration)->BroadcastServer<MyServer>{    
     let rpc_url = my_config.validator_url_http;
     let ws_url = my_config.validator_url_ws;
     let rpc_client = RpcClient::new(rpc_url.clone());

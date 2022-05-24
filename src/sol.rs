@@ -20,12 +20,12 @@ use solana_client::{
         TpuClientConfig, TpuClient,
     }
 };
-use solmate_client::{
+use solmate_rust_helper::{
     rpcnb,
     convert_pubkey,convert_keypair,reverse_keypair, copy_keypair
 };
 use tonic::{Request, Response, Status};
-use solmate_client::{config,solanabase,util,basic};
+use solmate_rust_helper::{config,solanabase,util,basic};
 
 use solanabase::{
     broadcast_server::{
@@ -50,7 +50,7 @@ impl Broadcast for MyServer {
     async fn send_tx<'a>(&'a self, req: Request<SendBatchRequest>) -> Result<Response<SendBatchResponse>,Status> { 
         todo!() 
     }
-    async fn run_genesis<'a>(&'a self, req: Request<Genesis>) -> Result<Response<solmate_client::basic::Empty>,Status> { 
+    async fn run_genesis<'a>(&'a self, req: Request<Genesis>) -> Result<Response<solmate_rust_helper::basic::Empty>,Status> { 
         let r = req.get_ref();
         let payer;
         if let Some(x)=copy_keypair(&r.payer){
@@ -160,7 +160,7 @@ impl Broadcast for MyServer {
             return Err(Status::invalid_argument("bad key pair"));
         }
         
-        let k=solmate_client::reverse_keypair(&result.unwrap());
+        let k=solmate_rust_helper::reverse_keypair(&result.unwrap());
         if k.is_err(){
             return Err(Status::invalid_argument("bad key pair"));
         }
@@ -229,12 +229,12 @@ impl Broadcast for MyServer {
         }
         
 
-        let y = solmate_client::reverse_keypair(&result.unwrap())?;
+        let y = solmate_rust_helper::reverse_keypair(&result.unwrap())?;
 
         return Ok(Response::new(y));
 
     }
-    async fn run_mint<'a>(&'a self, req: Request<Mint>) -> Result<Response<solmate_client::basic::Empty>,Status> { 
+    async fn run_mint<'a>(&'a self, req: Request<Mint>) -> Result<Response<solmate_rust_helper::basic::Empty>,Status> { 
         let r = req.get_ref();
 
         let payer;
@@ -317,7 +317,7 @@ impl Broadcast for MyServer {
 impl MyServer {
 
     fn new(
-        my_config: solmate_client::config::Configuration
+        my_config: solmate_rust_helper::config::Configuration
     ) -> MyServer {
 
         let rpc_url = my_config.validator_url_http;
@@ -344,7 +344,7 @@ impl MyServer {
 }
 
 
-pub fn init<'a>(my_config: solmate_client::config::Configuration)->BroadcastServer<MyServer>{
+pub fn init<'a>(my_config: solmate_rust_helper::config::Configuration)->BroadcastServer<MyServer>{
     return BroadcastServer::new(MyServer::new(my_config));
 }
 

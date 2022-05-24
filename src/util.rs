@@ -28,7 +28,7 @@ use anyhow::{anyhow, Result};
 const HEADER_JWT:&str="JWT";
 
 // retrieve the jwt from an incoming gRPC request so that the RPC and WS client can use an authenticated JSON RPC endpoint.
-pub fn get_jwt<T>(req: Request<T>)->Option<String>{
+pub fn get_jwt<'a, T>(req: &'a Request<T>)->Option<String>{
     return match req.metadata().get(HEADER_JWT){
         Some(x)=>{
             let ans=match x.to_str(){

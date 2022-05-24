@@ -55,7 +55,7 @@ pub fn config_from_env() ->Configuration{
     let v_http=env::var("VALIDATOR_HTTP_URL").expect("$VALIDATOR_HTTP_URL is not set");
     let v_ws=env::var("VALIDATOR_WS_URL").expect("$VALIDATOR_WS_URL is not set");
     return Configuration{
-        cluster: cluster,
+        cluster,
         grpc_listen_url:grpc_name.to_string(),
         validator_url_http:v_http.to_string(),
         validator_url_ws:v_ws.to_string(),
