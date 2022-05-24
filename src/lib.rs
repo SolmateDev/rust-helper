@@ -19,9 +19,6 @@ pub mod solanabase{
     tonic::include_proto!("solana");
 }
 
-pub mod solananet{
-    tonic::include_proto!("solananet");
-}
 pub mod config;
 pub mod util;
 pub mod rpcnb;

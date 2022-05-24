@@ -4,8 +4,6 @@ use futures::lock::Mutex;
 use solana_client::{nonblocking::rpc_client::RpcClient, tpu_client::{TpuClientConfig, TpuClient}};
 use tonic::transport::Server;
 
-
-mod tpu;
 mod serum;
 mod sol;
 
@@ -22,7 +20,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 
     Server::builder().concurrency_limit_per_connection(64)
-        .add_service(tpu::init(my_config.clone()))
         .add_service(serum_server)
         .add_service(sol::init(my_config.clone()))
         .serve(addr)
