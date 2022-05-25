@@ -153,6 +153,7 @@ impl Broadcast for MyServer {
                     payer=y;
                 },
                 Err(e)=>{
+                    eprintln!("{}",e);
                     return Err(Status::invalid_argument("no payer"));
                 }
             }
@@ -167,6 +168,7 @@ impl Broadcast for MyServer {
                     mint=y;
                 },
                 Err(e)=>{
+                    eprintln!("{}",e);
                     return Err(Status::invalid_argument("no mint"));
                 }
             }
@@ -182,6 +184,7 @@ impl Broadcast for MyServer {
                     owner=y;
                 },
                 Err(e)=>{
+                    eprintln!("{}",e);
                     return Err(Status::invalid_argument("no owner"));
                 }
             }
@@ -202,6 +205,7 @@ impl Broadcast for MyServer {
                 return Ok(Response::new(basic::Empty{}))
             },
             Err(e)=>{
+                eprintln!("{}",e);
                 return Err(Status::internal("failed to create and init mint"))
             }
         }
@@ -220,6 +224,7 @@ impl Broadcast for MyServer {
                         mint=y;
                     },
                     Err(e)=>{
+                        eprintln!("{}",e);
                         return Err(Status::invalid_argument("no mint"));
                     }
                 }
@@ -237,6 +242,7 @@ impl Broadcast for MyServer {
                         owner=y;
                     },
                     Err(e)=>{
+                        eprintln!("{}",e);
                         return Err(Status::invalid_argument("no owner"));
                     }
                 }
@@ -276,6 +282,7 @@ impl Broadcast for MyServer {
                         mint=y;
                     },
                     Err(e)=>{
+                        eprintln!("{}",e);
                         return Err(Status::invalid_argument("no mint"));
                     }
                 }
@@ -293,6 +300,7 @@ impl Broadcast for MyServer {
                         owner=y;
                     },
                     Err(e)=>{
+                        eprintln!("{}",e);
                         return Err(Status::invalid_argument("no mint"));
                     }
                 }
@@ -339,6 +347,7 @@ impl Broadcast for MyServer {
                         payer=y;
                     },
                     Err(e)=>{
+                        eprintln!("{}",e);
                         return Err(Status::invalid_argument("no payer"));
                     }
                 }
@@ -354,7 +363,7 @@ impl Broadcast for MyServer {
                         signer=y;
                     },
                     Err(e)=>{
-                        return Err(Status::invalid_argument("no signer"));
+                        return Err(e);
                     }
                 }
             } else {
@@ -387,6 +396,7 @@ impl Broadcast for MyServer {
                         recipient=y;
                     },
                     Err(e)=>{
+                        eprintln!("{}",e);
                         return Err(Status::invalid_argument("no recipient"));
                     }
                 }
